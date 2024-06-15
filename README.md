@@ -1,3 +1,11 @@
+# Game of life
+
+## TODO
+1. Board type selection (random, chess, lines, empty etc.)
+2. Board size selection(?)
+3. Fix scrolling (when board is too small scrolling is broken)
+4. Add patterns to choose from on the right panel
+5. Option to save and load the board???
 # Svelte + TS + Vite
 
 This template should help get you started developing with Svelte and TypeScript in Vite.
