@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BoardType } from "../board";
   import { onMount } from "svelte";
+  import type { Template } from "../templates";
 
   export let currentBoard: BoardType;
 
@@ -14,8 +15,10 @@
   let canvasEl: HTMLCanvasElement;
   let boardPosition = { x: 0, y: 0 };
   let prevMousePosition = { x: 0, y: 0 };
-  let currentCellSize = 5;
   let frameId: number;
+
+  export let currentCellSize: number;
+  export let selectedTemplate: Template | null = null;
 
   onMount(() => {
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -251,7 +254,30 @@
     const cellY = Math.floor(
       (mouseYInCanvas - boardPosition.y) / currentCellSize,
     );
-    currentBoard[cellX][cellY] = currentBoard[cellX][cellY] === 1 ? 0 : 1;
+
+    if (selectedTemplate) {
+      for (let row = 0; row < selectedTemplate.cells.length; row++) {
+        for (
+          let column = 0;
+          column < selectedTemplate.cells[row].length;
+          column++
+        ) {
+          if (
+            cellX + row < 0 ||
+            cellY + column < 0 ||
+            cellX + row >= currentBoard.length ||
+            cellY + column >= currentBoard[0].length
+          ) {
+            continue;
+          }
+          currentBoard[cellX + column][cellY + row] =
+            selectedTemplate.cells[row][column];
+        }
+      }
+    } else {
+      // toggle the cell
+      currentBoard[cellX][cellY] = currentBoard[cellX][cellY] === 1 ? 0 : 1;
+    }
 
     mouseDragLength = 0;
   };
