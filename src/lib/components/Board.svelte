@@ -4,22 +4,18 @@
 
   export let currentBoard: BoardType;
 
-  // TODO: scroll factor may cause problem with full zooming out (e.g., 460 pixels width board turn into 450)
   const scrollFactor = 0.25;
   // some clicks may be considered as dragging,
   // drag takes place after a few mouse move events
   const dragLengthThreshold = 5;
-
+  let mouseDragLength = 0;
+  $: isLongDrag = mouseDragLength > dragLengthThreshold;
   let boardDiv: HTMLDivElement;
   let canvasEl: HTMLCanvasElement;
-  let drawStart = { x: 0, y: 0 };
+  let boardPosition = { x: 0, y: 0 };
   let prevMousePosition = { x: 0, y: 0 };
   let currentCellSize = 5;
-  let mouseDragLength = 0;
-
   let frameId: number;
-
-  const isLongDrag = () => mouseDragLength > dragLengthThreshold;
 
   onMount(() => {
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -31,27 +27,29 @@
       }
 
       if (resizeTimeout === null) {
-        // use timeout so that it doesn't resize too often
+        // use timeout so that it doesn't resize too often and does not freeze the browser
         resizeTimeout = setTimeout(() => {
+          // make sure the canvas takes the whole div
           resizeContextToMatchDiv(ctx);
           resizeTimeout = null;
-        }, 0);
+        }, 10);
       }
     });
     observer.observe(boardDiv);
 
-    window.addEventListener("wheel", onWheel);
+    canvasEl.addEventListener("wheel", onWheel);
     // TODO: do we need to use requestAnimationFrame for drawing?
     frameId = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(frameId);
-      window.removeEventListener("wheel", onWheel);
+      canvasEl.removeEventListener("wheel", onWheel);
       observer.unobserve(boardDiv);
     };
   });
 
-  const setDrawStart = (newValue: { x: number; y: number }) => {
+  const setBoardPosition = (newValue: { x: number; y: number }) => {
+    // prevent the board to start in the middle of the canvas
     newValue.x = Math.min(newValue.x, 0);
     newValue.y = Math.min(newValue.y, 0);
 
@@ -61,6 +59,7 @@
     const { width: canvasWidth, height: canvasHeight } =
       canvasEl.getBoundingClientRect();
 
+    // prevent the board end to finish in the middle of the canvas
     if (newValue.x + boardWidth < canvasWidth) {
       newValue.x = canvasWidth - boardWidth;
     }
@@ -69,15 +68,38 @@
       newValue.y = canvasHeight - boardHeight;
     }
 
-    drawStart = newValue;
+    boardPosition = newValue;
   };
 
   const resizeContextToMatchDiv = (ctx: CanvasRenderingContext2D) => {
     const { width, height } = boardDiv.getBoundingClientRect();
-    ctx.canvas.width = width;
-    ctx.canvas.height = height;
+    // canvas size uses integers
+    // passing float values may cause empty lines on the sides of the canvas
+    // to prevent that, we use ceil
+    ctx.canvas.width = Math.ceil(width);
+    ctx.canvas.height = Math.ceil(height);
 
-    // TODO: handle board position, scale etc. (board may be to small to render to fill a whole canvas)
+    let boardWidth = currentBoard.length * currentCellSize;
+    let boardHeight = currentBoard[0].length * currentCellSize;
+
+    // current cell size should be changed, so that the board fits the canvas
+    if (boardWidth < width || boardHeight < height) {
+      currentCellSize = Math.max(
+        width / currentBoard.length,
+        height / currentBoard[0].length,
+      );
+
+      boardWidth = currentBoard.length * currentCellSize;
+      boardHeight = currentBoard[0].length * currentCellSize;
+    }
+
+    // move the board whether it leaves empty space in the canvas (it should always fill the canvas)
+    if (boardPosition.x + boardWidth < width) {
+      boardPosition.x = width - boardWidth;
+    }
+    if (boardPosition.y + boardHeight < height) {
+      boardPosition.y = height - boardHeight;
+    }
   };
 
   const draw = () => {
@@ -87,28 +109,28 @@
     }
     ctx.fillStyle = "black";
 
-    const width = canvasEl.width;
-    const height = canvasEl.height;
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
 
     ctx.clearRect(0, 0, width, height);
 
     let i = 0;
-    if (drawStart.x < 0) {
-      i = Math.floor(-drawStart.x / currentCellSize);
+    if (boardPosition.x < 0) {
+      i = Math.floor(-boardPosition.x / currentCellSize);
     }
 
     for (; i < currentBoard.length; i++) {
-      const cellX = drawStart.x + i * currentCellSize;
+      const cellX = boardPosition.x + i * currentCellSize;
       if (cellX > width) {
         break;
       }
 
       let j = 0;
-      if (drawStart.y < 0) {
-        j = Math.floor(-drawStart.y / currentCellSize);
+      if (boardPosition.y < 0) {
+        j = Math.floor(-boardPosition.y / currentCellSize);
       }
       for (; j < currentBoard[i].length; j++) {
-        const cellY = drawStart.y + j * currentCellSize;
+        const cellY = boardPosition.y + j * currentCellSize;
         if (cellY > height) {
           break;
         }
@@ -127,29 +149,30 @@
       return;
     }
 
-    const { top, left, right, bottom, width, height } =
-      canvasEl.getBoundingClientRect();
-    // TODO: check not outside of canvas but outside of board
-    if (
-      e.clientX < left ||
-      e.clientX > right ||
-      e.clientY < top ||
-      e.clientY > bottom
-    ) {
-      return;
-    }
+    const { top, left, width, height } = canvasEl.getBoundingClientRect();
 
-    const sizeChange = Math.sign(e.deltaY) * scrollFactor;
-    // check if cells width greater than 0
+    // size change is proportional to the current cell size
+    // so that the zooming is smooth (there is no feeling it slows down with a high zoom)
+    const sizeChange =
+      Math.sign(e.deltaY) * scrollFactor * currentCellSize * 0.1;
+
+    // cell size cannot be less than 0
     if (sizeChange < 0 && currentCellSize + sizeChange <= 0) {
       return;
     }
-    // cannot zoom out further than the canvas container
-    const newCellSize = currentCellSize + sizeChange;
-    const newBoardWidth = currentBoard[0].length * newCellSize;
-    const newBoardHeight = currentBoard.length * newCellSize;
+    // cannot zoom out that far that the board is smaller than the canvas
+    let newCellSize = currentCellSize + sizeChange;
+    let newBoardWidth = currentBoard[0].length * newCellSize;
+    let newBoardHeight = currentBoard.length * newCellSize;
     if (newBoardWidth < width || newBoardHeight < height) {
-      return;
+      // set the cell size so that the board fills the canvas
+      newCellSize = Math.max(
+        width / currentBoard[0].length,
+        height / currentBoard.length,
+      );
+
+      newBoardWidth = currentBoard[0].length * newCellSize;
+      newBoardHeight = currentBoard.length * newCellSize;
     }
 
     const previousCellSize = currentCellSize;
@@ -161,11 +184,12 @@
     const previousBoardWidth = currentBoard[0].length * previousCellSize;
     const previousBoardHeight = currentBoard.length * previousCellSize;
 
-    const previousXFactor = (mouseXInCanvas - drawStart.x) / previousBoardWidth;
+    const previousXFactor =
+      (mouseXInCanvas - boardPosition.x) / previousBoardWidth;
     const previousYFactor =
-      (mouseYInCanvas - drawStart.y) / previousBoardHeight;
+      (mouseYInCanvas - boardPosition.y) / previousBoardHeight;
 
-    setDrawStart({
+    setBoardPosition({
       x: mouseXInCanvas - newBoardWidth * previousXFactor,
       y: mouseYInCanvas - newBoardHeight * previousYFactor,
     });
@@ -174,7 +198,7 @@
   const onMouseMove = (e: MouseEvent) => {
     mouseDragLength += 1;
 
-    if (mouseDragLength <= dragLengthThreshold) {
+    if (!isLongDrag) {
       return;
     }
 
@@ -183,9 +207,9 @@
       y: e.clientY - prevMousePosition.y,
     };
 
-    setDrawStart({
-      x: drawStart.x + mouseDiff.x,
-      y: drawStart.y + mouseDiff.y,
+    setBoardPosition({
+      x: boardPosition.x + mouseDiff.x,
+      y: boardPosition.y + mouseDiff.y,
     });
 
     prevMousePosition = { x: e.clientX, y: e.clientY };
@@ -196,13 +220,21 @@
     window.addEventListener("mousemove", onMouseMove);
   };
 
-  const stopDragging = () => {
+  const onMouseUp = () => {
     window.removeEventListener("mousemove", onMouseMove);
+    // do not stop dragging - it is stopped on click event
+  };
+
+  const onMouseLeave = () => {
+    window.removeEventListener("mousemove", onMouseMove);
+    // stop dragging
     mouseDragLength = 0;
   };
 
   const onCanvasClick = (e: MouseEvent) => {
-    if (mouseDragLength > dragLengthThreshold) {
+    if (isLongDrag) {
+      // stop dragging
+      mouseDragLength = 0;
       return;
     }
 
@@ -213,8 +245,12 @@
     const mouseXInCanvas = mouseX - left;
     const mouseYInCanvas = mouseY - top;
 
-    const cellX = Math.floor((mouseXInCanvas - drawStart.x) / currentCellSize);
-    const cellY = Math.floor((mouseYInCanvas - drawStart.y) / currentCellSize);
+    const cellX = Math.floor(
+      (mouseXInCanvas - boardPosition.x) / currentCellSize,
+    );
+    const cellY = Math.floor(
+      (mouseYInCanvas - boardPosition.y) / currentCellSize,
+    );
     currentBoard[cellX][cellY] = currentBoard[cellX][cellY] === 1 ? 0 : 1;
 
     mouseDragLength = 0;
@@ -227,8 +263,8 @@
     bind:this={canvasEl}
     on:click={onCanvasClick}
     on:mousedown={onMouseDown}
-    on:mouseup={stopDragging}
-    on:mouseleave={stopDragging}
+    on:mouseup={onMouseUp}
+    on:mouseleave={onMouseLeave}
   />
 </div>
 
@@ -237,10 +273,6 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-  }
-
-  canvas {
-    display: block;
   }
 
   .drag-active {

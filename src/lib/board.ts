@@ -13,7 +13,7 @@ export const getRandomBoard = (size: number) => {
   for (let i = 0; i < size; i++) {
     const row = new Array(size);
     for (let j = 0; j < size; j++) {
-      row[j] = Number(Math.random() > 0.5);
+      row[j] = Number(Math.random() > 0.7);
     }
     board[i] = row;
   }
