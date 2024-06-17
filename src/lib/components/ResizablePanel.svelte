@@ -56,9 +56,11 @@
   aside {
     display: flex;
     flex-direction: row;
+    overflow: hidden;
   }
 
   .content {
     width: calc(100% - var(--resizer-width));
+    overflow: auto;
   }
 </style>

@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { BoardType } from "../board";
   import { onMount } from "svelte";
+  import type { Template } from "../templates";
 
   export let currentBoard: BoardType;
 
   const scrollFactor = 0.25;
+  const animationLength = 60;
   // some clicks may be considered as dragging,
   // drag takes place after a few mouse move events
   const dragLengthThreshold = 5;
@@ -14,8 +16,13 @@
   let canvasEl: HTMLCanvasElement;
   let boardPosition = { x: 0, y: 0 };
   let prevMousePosition = { x: 0, y: 0 };
-  let currentCellSize = 5;
+  let mousePosition = { x: 0, y: 0 };
+  let animationFrame = 0;
+  let animationReversed = false;
   let frameId: number;
+
+  export let currentCellSize: number;
+  export let selectedTemplate: Template | null = null;
 
   onMount(() => {
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -38,12 +45,14 @@
     observer.observe(boardDiv);
 
     canvasEl.addEventListener("wheel", onWheel);
+    document.addEventListener("mousemove", onMouseMove);
     // TODO: do we need to use requestAnimationFrame for drawing?
     frameId = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(frameId);
       canvasEl.removeEventListener("wheel", onWheel);
+      document.removeEventListener("mousemove", onMouseMove);
       observer.unobserve(boardDiv);
     };
   });
@@ -141,6 +150,64 @@
       }
     }
 
+    // progress animation
+    if (!animationReversed) {
+      animationFrame += 1;
+      if (animationFrame === animationLength) {
+        animationReversed = true;
+      }
+    } else {
+      animationFrame -= 1;
+      if (animationFrame === 0) {
+        animationReversed = false;
+      }
+    }
+
+    const color = 80 + (120 * animationFrame) / 60;
+    ctx.fillStyle = `rgb(${color},${color},${color})`;
+    const { left, top } = canvasEl.getBoundingClientRect();
+
+    // animation selected cells
+    if (selectedTemplate) {
+      for (let row = 0; row < selectedTemplate.cells.length; row++) {
+        const cellY =
+          Math.floor((mousePosition.y - top) / currentCellSize) + row;
+        for (
+          let column = 0;
+          column < selectedTemplate.cells[row].length;
+          column++
+        ) {
+          if (selectedTemplate.cells[row][column] === 1) {
+            const cellX =
+              Math.floor((mousePosition.x - left) / currentCellSize) + column;
+            ctx.fillRect(
+              cellX * currentCellSize,
+              cellY * currentCellSize,
+              currentCellSize,
+              currentCellSize,
+            );
+          }
+        }
+      }
+    } else {
+      // animation of the cell under the mouse
+      const cellX = Math.floor((mousePosition.x - left) / currentCellSize);
+      const cellY = Math.floor((mousePosition.y - top) / currentCellSize);
+      if (
+        cellX >= 0 &&
+        cellX < currentBoard.length &&
+        cellY >= 0 &&
+        cellY < currentBoard[0].length
+      ) {
+        ctx.fillRect(
+          cellX * currentCellSize,
+          cellY * currentCellSize,
+          currentCellSize,
+          currentCellSize,
+        );
+      }
+    }
+
     frameId = requestAnimationFrame(draw);
   };
 
@@ -196,6 +263,10 @@
   };
 
   const onMouseMove = (e: MouseEvent) => {
+    mousePosition = { x: e.clientX, y: e.clientY };
+  };
+
+  const moveBoardWithMouse = (e: MouseEvent) => {
     mouseDragLength += 1;
 
     if (!isLongDrag) {
@@ -217,16 +288,16 @@
 
   const onMouseDown = (e: MouseEvent) => {
     prevMousePosition = { x: e.clientX, y: e.clientY };
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", moveBoardWithMouse);
   };
 
   const onMouseUp = () => {
-    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mousemove", moveBoardWithMouse);
     // do not stop dragging - it is stopped on click event
   };
 
   const onMouseLeave = () => {
-    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mousemove", moveBoardWithMouse);
     // stop dragging
     mouseDragLength = 0;
   };
@@ -251,7 +322,28 @@
     const cellY = Math.floor(
       (mouseYInCanvas - boardPosition.y) / currentCellSize,
     );
-    currentBoard[cellX][cellY] = currentBoard[cellX][cellY] === 1 ? 0 : 1;
+
+    if (selectedTemplate) {
+      for (let row = 0; row < selectedTemplate.cells.length; row++) {
+        for (
+          let column = 0;
+          column < selectedTemplate.cells[row].length;
+          column++
+        ) {
+          if (
+            cellY + row >= currentBoard.length ||
+            cellX + column >= currentBoard[0].length
+          ) {
+            continue;
+          }
+          currentBoard[cellX + column][cellY + row] =
+            selectedTemplate.cells[row][column];
+        }
+      }
+    } else {
+      // toggle the cell
+      currentBoard[cellX][cellY] = currentBoard[cellX][cellY] === 1 ? 0 : 1;
+    }
 
     mouseDragLength = 0;
   };
