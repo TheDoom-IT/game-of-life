@@ -10,8 +10,7 @@
   import { SimulationStatus } from "./lib/status";
   import RightPanel from "./lib/components/RightPanel.svelte";
   import { onMount } from "svelte";
-  import type { Template } from "./lib/templates";
-  import MouseAttachedTemplate from "./lib/components/MouseAttachedTemplate.svelte";
+  import { rotateTemplate, type Template } from "./lib/templates";
 
   const BOARD_SIZE = 100;
   let currentCellSize = 5;
@@ -45,6 +44,10 @@
             : SimulationStatus.RUNNING;
       } else if (event.key === "Escape") {
         selectedTemplate = null;
+      } else if (event.key === "r") {
+        if (selectedTemplate) {
+          selectedTemplate.cells = rotateTemplate(selectedTemplate.cells);
+        }
       }
     });
   });
@@ -54,7 +57,6 @@
   <LeftPanel bind:status />
   <Board {currentBoard} bind:currentCellSize {selectedTemplate} />
   <RightPanel bind:selectedTemplate />
-  <MouseAttachedTemplate {selectedTemplate} {currentCellSize} />
 </main>
 
 <!--TODO: style main properly-->

@@ -9,41 +9,25 @@
   let canvasEl: HTMLCanvasElement;
 
   const draw = (context: CanvasRenderingContext2D) => {
-    const { width, height } = divEl.getBoundingClientRect();
+    const rows = template.cells.length;
+    const columns = template.cells[0].length;
+
+    const { width } = divEl.getBoundingClientRect();
     context.canvas.width = width;
+
+    const cellSize = width / (columns + 2);
+    const height = (rows + 2) * cellSize;
+
     context.canvas.height = height;
     context.fillStyle = "green";
     context.strokeStyle = "white";
-    context.lineWidth = 1;
+    context.lineWidth = 0.5;
 
-    const rows = template.cells.length;
-    const columns = template.cells[0].length;
-    let canvasRows = rows;
-    let canvasColumns = columns;
+    let canvasRows = rows + 2;
+    let canvasColumns = columns + 2;
 
-    let cellSize;
-    if (rows > columns) {
-      canvasColumns = columns + 2;
-      cellSize = width / (columns + 2);
-    } else if (rows < columns) {
-      canvasRows = rows + 2;
-      cellSize = width / (rows + 2);
-    } else {
-      canvasRows = rows + 2;
-      canvasColumns = columns + 2;
-      cellSize = width / (rows + 2);
-    }
-
-    let iShift = 0;
-    let jShift = 0;
-    if (rows > columns) {
-      jShift = 1;
-    } else if (columns > rows) {
-      iShift = 1;
-    } else {
-      iShift = 1;
-      jShift = 1;
-    }
+    let iShift = 1;
+    let jShift = 1;
 
     context.clearRect(0, 0, width, height);
 
@@ -105,7 +89,7 @@
   </h5>
   <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
   <div class="bordered-container" on:click={onClick}>
-    <div class="canvas-container" bind:this={divEl}>
+    <div bind:this={divEl}>
       <canvas bind:this={canvasEl} />
     </div>
   </div>
@@ -131,11 +115,6 @@
     border-style: solid;
     border-width: 3px;
     cursor: pointer;
-  }
-
-  .canvas-container {
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
   }
 
   canvas {
