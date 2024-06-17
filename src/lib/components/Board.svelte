@@ -164,12 +164,11 @@
     }
 
     const color = 80 + (120 * animationFrame) / 60;
+    ctx.fillStyle = `rgb(${color},${color},${color})`;
     const { left, top } = canvasEl.getBoundingClientRect();
 
     // animation selected cells
     if (selectedTemplate) {
-      ctx.fillStyle = `rgb(${color},${color},${color})`;
-      // ctx.fillStyle = `rgb(255,255,255, ${0.1 + 0.3 * templateAnimation / 60})`;
       for (let row = 0; row < selectedTemplate.cells.length; row++) {
         const cellY =
           Math.floor((mousePosition.y - top) / currentCellSize) + row;
@@ -200,7 +199,6 @@
         cellY >= 0 &&
         cellY < currentBoard[0].length
       ) {
-        ctx.fillStyle = `rgb(${color},${color},${color})`;
         ctx.fillRect(
           cellX * currentCellSize,
           cellY * currentCellSize,
