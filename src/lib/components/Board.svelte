@@ -45,14 +45,16 @@
     observer.observe(boardDiv);
 
     canvasEl.addEventListener("wheel", onWheel);
-    document.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove);
     // TODO: do we need to use requestAnimationFrame for drawing?
+    //  we may use animation frames for animations only
+    //  and draw the board when it is needed (e.g., on a different canvas)
     frameId = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(frameId);
       canvasEl.removeEventListener("wheel", onWheel);
-      document.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mousemove", onMouseMove);
       observer.unobserve(boardDiv);
     };
   });
@@ -167,11 +169,15 @@
     ctx.fillStyle = `rgb(${color},${color},${color})`;
     const { left, top } = canvasEl.getBoundingClientRect();
 
+    const mouseXInCanvas = mousePosition.x - left;
+    const mouseYInCanvas = mousePosition.y - top;
+
     // animation selected cells
     if (selectedTemplate) {
       for (let row = 0; row < selectedTemplate.cells.length; row++) {
         const cellY =
-          Math.floor((mousePosition.y - top) / currentCellSize) + row;
+          Math.floor((mouseYInCanvas - boardPosition.y) / currentCellSize) +
+          row;
         for (
           let column = 0;
           column < selectedTemplate.cells[row].length;
@@ -179,10 +185,11 @@
         ) {
           if (selectedTemplate.cells[row][column] === 1) {
             const cellX =
-              Math.floor((mousePosition.x - left) / currentCellSize) + column;
+              Math.floor((mouseXInCanvas - boardPosition.x) / currentCellSize) +
+              column;
             ctx.fillRect(
-              cellX * currentCellSize,
-              cellY * currentCellSize,
+              boardPosition.x + cellX * currentCellSize,
+              boardPosition.y + cellY * currentCellSize,
               currentCellSize,
               currentCellSize,
             );
@@ -191,8 +198,12 @@
       }
     } else {
       // animation of the cell under the mouse
-      const cellX = Math.floor((mousePosition.x - left) / currentCellSize);
-      const cellY = Math.floor((mousePosition.y - top) / currentCellSize);
+      const cellX = Math.floor(
+        (mouseXInCanvas - boardPosition.x) / currentCellSize,
+      );
+      const cellY = Math.floor(
+        (mouseYInCanvas - boardPosition.y) / currentCellSize,
+      );
       if (
         cellX >= 0 &&
         cellX < currentBoard.length &&
@@ -200,8 +211,8 @@
         cellY < currentBoard[0].length
       ) {
         ctx.fillRect(
-          cellX * currentCellSize,
-          cellY * currentCellSize,
+          boardPosition.x + cellX * currentCellSize,
+          boardPosition.y + cellY * currentCellSize,
           currentCellSize,
           currentCellSize,
         );
