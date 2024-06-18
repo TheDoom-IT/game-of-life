@@ -22,7 +22,7 @@
   <div class="content">
     <h3 class="title">Templates</h3>
     {#each templates as templateGroup}
-      <h4 class="group-name">{templateGroup.name}</h4>
+      <h4 class="text-divider group-name">{templateGroup.name}</h4>
       {#each templateGroup.templates as template}
         <TemplateTile onClick={() => selectTemplate(template)} {template} />
       {/each}
@@ -36,12 +36,7 @@
   }
 
   .group-name {
-    text-align: center;
     margin: 50px 0 0 0;
-    padding: 10px 0;
-    border-bottom-style: solid;
-    border-top-style: solid;
-    border-width: 2px;
   }
 
   .group-name:first-of-type {

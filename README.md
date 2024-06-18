@@ -3,9 +3,8 @@
 ## TODO
 1. Board type selection (random, chess, lines, empty etc.)
 2. Board size selection(?)
-3. Add more statistics to the left panel (return to the initial state, current iteration, key shortcuts etc.) 
-4. Option to save and load the board???
-5. Optimize rendering the board.
+3. Option to save and load the board??? 
+4. Optimize rendering the board.
 # Svelte + TS + Vite
 
 This template should help get you started developing with Svelte and TypeScript in Vite.

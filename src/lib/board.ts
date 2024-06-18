@@ -20,6 +20,14 @@ export const getRandomBoard = (size: number) => {
   return board;
 };
 
+export const cloneBoard = (board: BoardType) => {
+  const newBoard: BoardType = new Array(board.length);
+  for (let i = 0; i < board.length; i++) {
+    newBoard[i] = [...board[i]];
+  }
+  return newBoard;
+};
+
 export const getNextBoard = (currentBoard: BoardType, oldBoard: BoardType) => {
   for (let i = 0; i < currentBoard.length; i++) {
     for (let j = 0; j < currentBoard[i].length; j++) {
