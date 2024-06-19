@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { BoardType } from "../board";
   import { onMount } from "svelte";
-  import type { Template } from "../templates";
+  import type { Pattern } from "../patterns";
 
   export let currentBoard: BoardType;
 
@@ -22,7 +22,7 @@
   let frameId: number;
 
   export let currentCellSize: number;
-  export let selectedTemplate: Template | null = null;
+  export let selectedPattern: Pattern | null = null;
 
   onMount(() => {
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -173,17 +173,17 @@
     const mouseYInCanvas = mousePosition.y - top;
 
     // animation selected cells
-    if (selectedTemplate) {
-      for (let row = 0; row < selectedTemplate.cells.length; row++) {
+    if (selectedPattern) {
+      for (let row = 0; row < selectedPattern.cells.length; row++) {
         const cellY =
           Math.floor((mouseYInCanvas - boardPosition.y) / currentCellSize) +
           row;
         for (
           let column = 0;
-          column < selectedTemplate.cells[row].length;
+          column < selectedPattern.cells[row].length;
           column++
         ) {
-          if (selectedTemplate.cells[row][column] === 1) {
+          if (selectedPattern.cells[row][column] === 1) {
             const cellX =
               Math.floor((mouseXInCanvas - boardPosition.x) / currentCellSize) +
               column;
@@ -334,11 +334,11 @@
       (mouseYInCanvas - boardPosition.y) / currentCellSize,
     );
 
-    if (selectedTemplate) {
-      for (let row = 0; row < selectedTemplate.cells.length; row++) {
+    if (selectedPattern) {
+      for (let row = 0; row < selectedPattern.cells.length; row++) {
         for (
           let column = 0;
-          column < selectedTemplate.cells[row].length;
+          column < selectedPattern.cells[row].length;
           column++
         ) {
           if (
@@ -348,7 +348,7 @@
             continue;
           }
           currentBoard[cellX + column][cellY + row] =
-            selectedTemplate.cells[row][column];
+            selectedPattern.cells[row][column];
         }
       }
     } else {

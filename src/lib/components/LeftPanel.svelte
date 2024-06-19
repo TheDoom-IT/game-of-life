@@ -31,13 +31,13 @@
           <div class="keyboard-button square-button">
             <div>Esc</div>
           </div>
-          <div class="text-center">Unselect template</div>
+          <div class="text-center">Unselect pattern</div>
         </div>
         <div class="shortcut">
           <div class="keyboard-button square-button">
             <div>R</div>
           </div>
-          <div class="text-center">Rotate template</div>
+          <div class="text-center">Rotate pattern</div>
         </div>
       </div>
     </div>

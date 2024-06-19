@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type { Template } from "../templates";
+  import type { Pattern } from "../patterns";
   import { onMount } from "svelte";
 
-  export let template: Template;
+  export let pattern: Pattern;
   export let onClick: () => void;
 
   let divEl: HTMLDivElement;
   let canvasEl: HTMLCanvasElement;
 
   const draw = (context: CanvasRenderingContext2D) => {
-    const rows = template.cells.length;
-    const columns = template.cells[0].length;
+    const rows = pattern.cells.length;
+    const columns = pattern.cells[0].length;
 
     const { width } = divEl.getBoundingClientRect();
     context.canvas.width = width;
@@ -33,7 +33,7 @@
 
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
-        if (template.cells[i][j]) {
+        if (pattern.cells[i][j]) {
           context.fillRect(
             (j + jShift) * cellSize,
             (i + iShift) * cellSize,
@@ -83,9 +83,9 @@
   });
 </script>
 
-<div class="template-container">
-  <h5 class="template-name">
-    {template.name}
+<div class="pattern-container">
+  <h5 class="pattern-name">
+    {pattern.name}
   </h5>
   <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
   <div class="bordered-container" on:click={onClick}>
@@ -96,17 +96,17 @@
 </div>
 
 <style>
-  .template-name {
+  .pattern-name {
     text-align: center;
     margin: 0;
     padding: 5px;
   }
 
-  .template-container {
+  .pattern-container {
     margin-bottom: 1rem;
   }
 
-  .template-container:last-of-type {
+  .pattern-container:last-of-type {
     margin-bottom: 0;
   }
 

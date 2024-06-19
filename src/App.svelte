@@ -11,12 +11,12 @@
   import { SimulationStatus } from "./lib/status";
   import RightPanel from "./lib/components/RightPanel.svelte";
   import { onMount } from "svelte";
-  import { rotateTemplate, type Template } from "./lib/templates";
+  import { rotatePattern, type Pattern } from "./lib/patterns";
 
   const BOARD_SIZE = 500;
   let currentCellSize = 5;
 
-  let selectedTemplate: Template | null = null;
+  let selectedPattern: Pattern | null = null;
   let generation = 0;
   let status: SimulationStatus = SimulationStatus.STOPPED;
   // let currentBoard: BoardType = getRandomBoard(BOARD_SIZE);
@@ -69,10 +69,10 @@
       if (event.key === " ") {
         toggleStatus();
       } else if (event.key === "Escape") {
-        selectedTemplate = null;
+        selectedPattern = null;
       } else if (event.key === "r") {
-        if (selectedTemplate) {
-          selectedTemplate.cells = rotateTemplate(selectedTemplate.cells);
+        if (selectedPattern) {
+          selectedPattern.cells = rotatePattern(selectedPattern.cells);
         }
       }
     });
@@ -87,8 +87,8 @@
     {resetGenerations}
     {toggleStatus}
   />
-  <Board {currentBoard} bind:currentCellSize {selectedTemplate} />
-  <RightPanel bind:selectedTemplate />
+  <Board {currentBoard} bind:currentCellSize {selectedPattern} />
+  <RightPanel bind:selectedPattern />
 </main>
 
 <!--TODO: style main properly-->

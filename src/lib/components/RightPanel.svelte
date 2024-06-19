@@ -1,30 +1,30 @@
 <script lang="ts">
   import ResizablePanel from "./ResizablePanel.svelte";
-  import { type Template, templates } from "../templates";
-  import TemplateTile from "./TemplateTile.svelte";
+  import { type Pattern, patterns } from "../patterns";
+  import PatternTile from "./PatternTile.svelte";
 
-  export let selectedTemplate: Template | null = null;
+  export let selectedPattern: Pattern | null = null;
 
-  const selectTemplate = (template: Template) => {
-    if (selectedTemplate?.name === template.name) {
-      selectedTemplate = null;
+  const selectPattern = (pattern: Pattern) => {
+    if (selectedPattern?.name === pattern.name) {
+      selectedPattern = null;
       return;
     }
 
-    // copy object to avoid mutating the original template during rotation
-    selectedTemplate = {
-      ...template,
+    // copy object to avoid mutating the original pattern during rotation
+    selectedPattern = {
+      ...pattern,
     };
   };
 </script>
 
 <ResizablePanel direction="to-left">
   <div class="content">
-    <h3 class="title">Templates</h3>
-    {#each templates as templateGroup}
-      <h4 class="text-divider group-name">{templateGroup.name}</h4>
-      {#each templateGroup.templates as template}
-        <TemplateTile onClick={() => selectTemplate(template)} {template} />
+    <h3 class="title">Patterns</h3>
+    {#each patterns as patternGroup}
+      <h4 class="text-divider group-name">{patternGroup.name}</h4>
+      {#each patternGroup.patterns as pattern}
+        <PatternTile onClick={() => selectPattern(pattern)} {pattern} />
       {/each}
     {/each}
   </div>

@@ -1,34 +1,34 @@
 import type { BoardType } from "./board";
 
-export interface Template {
+export interface Pattern {
   name: string;
   cells: BoardType;
 }
 
-export interface TemplatesGroup {
+export interface PatternsGroup {
   name: string;
-  templates: Template[];
+  patterns: Pattern[];
 }
 
-export const rotateTemplate = (templateCells: BoardType): BoardType => {
-  const rows = templateCells.length;
-  const columns = templateCells[0].length;
+export const rotatePattern = (patternCells: BoardType): BoardType => {
+  const rows = patternCells.length;
+  const columns = patternCells[0].length;
 
   const result = [];
   for (let i = 0; i < columns; i++) {
     const row = [];
     for (let j = rows - 1; j >= 0; j--) {
-      row.push(templateCells[j][i]);
+      row.push(patternCells[j][i]);
     }
     result.push(row);
   }
   return result;
 };
 
-export const templates: TemplatesGroup[] = [
+export const patterns: PatternsGroup[] = [
   {
     name: "Static",
-    templates: [
+    patterns: [
       {
         name: "Square",
         cells: [
@@ -58,7 +58,7 @@ export const templates: TemplatesGroup[] = [
   },
   {
     name: "Oscillators",
-    templates: [
+    patterns: [
       {
         name: "Blinker",
         cells: [[1], [1], [1]],
@@ -73,7 +73,7 @@ export const templates: TemplatesGroup[] = [
         ],
       },
       {
-        name: "Oscillator 1",
+        name: "Pulsar",
         cells: [
           [0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -94,7 +94,7 @@ export const templates: TemplatesGroup[] = [
   },
   {
     name: "Spaceships",
-    templates: [
+    patterns: [
       {
         name: "Glider",
         cells: [
@@ -116,7 +116,7 @@ export const templates: TemplatesGroup[] = [
   },
   {
     name: "Guns",
-    templates: [
+    patterns: [
       {
         name: "Gosper Glider Gun",
         cells: [
